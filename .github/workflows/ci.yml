@@ -15,7 +15,3 @@ jobs:
   call-test-maven-service:
     name: Run Automated Tests - Maven service
     uses: eclipse-pass/playground/.github/workflows/maven-service-test.yml@main
-
-  temp-call-publish-html-app:
-    name: TEMP - Publish HTML app
-    uses: eclipse-pass/playground/.github/workflows/html-app-publish.yml@main
