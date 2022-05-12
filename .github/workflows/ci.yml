@@ -1,6 +1,10 @@
 name: Playground Continuous Integration
 on: [pull_request]
 
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   print-workflow-description:
     runs-on: ubuntu-latest
@@ -15,3 +19,11 @@ jobs:
   call-test-maven-service:
     name: Run Automated Tests - Maven service
     uses: eclipse-pass/playground/.github/workflows/maven-service-test.yml@main
+
+  call-lint-emberjs-app:
+    name: Run Lint - EmberJS
+    uses: eclipse-pass/playground/.github/workflows/emberjs-app-lint.yml@main
+
+  call-test-emberjs-app:
+    name: Run Automated Tests - EmberJS
+    uses: eclipse-pass/playground/.github/workflows/emberjs-app-test.yml@main
