@@ -1,0 +1,12 @@
+name: Nightly Task
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # daily, at 3am
+
+jobs:
+  nightly-task:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This is run daily at 3am"
