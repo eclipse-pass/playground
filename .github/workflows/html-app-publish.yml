@@ -8,6 +8,7 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
+#    environment: testing
     permissions:
       contents: write
       packages: write
@@ -77,21 +78,54 @@ jobs:
 
       # Update k8s manifest and commit the change
       #TODO: Update all paths to manifest YAML file
-      - name: Update k8s manifest
-        run: python ./.github/workflows/update-k8s-manifest.py ./html-app/k8s-manifest.yaml ${{ steps.meta.outputs.labels.org.opencontainers.image.version }}
-      - uses: fregante/setup-git-user@v1
-      - name: Add updated file
-        run: git add ./html-app/k8s-manifest.yaml
-      - name: Commit update
-        run: git commit -m "Auto updating html-app/k8s-manifest.yaml to use ${{ steps.meta.outputs.tags }}"
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
+      # - name: Update k8s manifest
+      #   run: python ./.github/workflows/update-k8s-manifest.py ./html-app/k8s-manifest.yaml ${{ steps.meta.outputs.labels.org.opencontainers.image.version }}
+      # - uses: fregante/setup-git-user@v1
+      # - name: Add updated file
+      #   run: git add ./html-app/k8s-manifest.yaml
+      # - name: Commit update
+      #   run: git commit -m "Auto updating html-app/k8s-manifest.yaml to use ${{ steps.meta.outputs.tags }}"
+      # - name: Push changes
+      #   uses: ad-m/github-push-action@master
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     branch: main
       
+      - name: view the secrets context
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+        run: echo "$SECRETS_CONTEXT"
+      - name: TEMP - print GH secret
+        run: echo ${{ secrets.GITHUB_TOKEN }}
+      - name: TEMP - print env secret direct
+        run: echo ${{ secrets.TEST_SECRET }}
+      - name: TEMP - print env secret with env
+        env:
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}
+        run: echo $TEST_SECRET
+
       # Deploy the new Docker image to our test k8s cluster
       #   The KUBE_CONFIG secret contains the information about where our k8s cluster can be found
+      - name: Create container registry secret
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        with:
+          args: create secret docker-registry regcred --docker-server=https://ghcr.io --docker-username=grant-mcs --docker-password=$GHCR_TOKEN
+      - name: Use container registry secret as default
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: >-
+            patch serviceaccount default -p '{"imagePullSecrets": [{"name": "regcred"}]}'
+      - name: Apply manifest
+        uses: actions-hub/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: apply -f html-app/k8s-manifest.yaml
       - name: Deploy to k8s cluster
         uses: actions-hub/kubectl@master
         env:

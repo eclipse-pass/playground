@@ -27,3 +27,7 @@ jobs:
   call-test-emberjs-app:
     name: Run Automated Tests - EmberJS
     uses: eclipse-pass/playground/.github/workflows/emberjs-app-test.yml@main
+
+  temp-call-publish-docker:
+    name: Build and Publish Docker image
+    uses: eclipse-pass/playground/.github/workflows/html-app-publish.yml@eb0055984165ee2f5e00a6c80ee52491d904f203
