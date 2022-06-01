@@ -1,5 +1,10 @@
 name: Publish Docker Image - HTML App
-on: [workflow_call, workflow_dispatch]
+on:
+  workflow_call:
+    secrets:
+      KUBE_CONFIG:
+        required: true
+        description: Configuration info for test k8s cluster
 
 env:
   REGISTRY: ghcr.io
