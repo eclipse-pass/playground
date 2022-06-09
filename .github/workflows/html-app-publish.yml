@@ -1,5 +1,13 @@
 name: Publish Docker Image - HTML App
-on: [workflow_call, workflow_dispatch]
+on:
+  workflow_call:
+    secrets:
+      KUBE_CONFIG:
+        required: true
+        description: Configuration info for test k8s cluster
+      DIGITALOCEAN_ACCESS_TOKEN:
+        required: true
+        description: Access token for Digital Ocean
 
 env:
   REGISTRY: ghcr.io
@@ -89,12 +97,15 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: main
-      
-      # Deploy the new Docker image to our test k8s cluster
-      #   The KUBE_CONFIG secret contains the information about where our k8s cluster can be found
-      - name: Deploy to k8s cluster
-        uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+
+      # This is specific to Digital Ocean and must be removed or replaced when using an Eclipse k8s cluster
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          args: get pods
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 pass-playground
+
+      - name: Deploy to k8s cluster
+        run: kubectl apply -f html-app/k8s-manifest.yaml
