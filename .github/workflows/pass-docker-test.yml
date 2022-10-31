@@ -1,0 +1,31 @@
+# This workflow will update the pass-core-main Docker image in GHCR and update the pass-core config
+#   in pass-docker
+
+name: Update pass-docker test
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout current repo
+      - name: Check out latest playground
+        uses: actions/checkout@v2
+
+      # Update pass-core config in pass-docker
+      - name: Return to root folder
+        run: cd ..
+      - name: Check out pass-docker
+        uses: actions/checkout@v2
+        with:
+          repository: eclipse-pass/pass-docker
+          token: ${{ secrets.pass_docker_pat }}
+      - name: Update nightly server config
+        run: echo "0.2.0-SNAPSHOT" | python tools/update-image.py eclipse-pass.nightly.yml pass-core
+      - name: Commit change (if any)
+        # The 'diff --quiet' ensures that the add/commit is only attempted if there is a change
+        run: diff --quiet || git commit -am 'Update pass-core image'
+      - name: Push update
+        run: git push
