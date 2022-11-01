@@ -22,10 +22,13 @@ jobs:
         with:
           repository: eclipse-pass/pass-docker
           token: ${{ secrets.pass_docker_pat }}
+      - name: Get pom version
+        id: pom_version
+        run: echo "POM_VERSION=0.2.0-SNAPSHOT" >> $GITHUB_OUTPUT
       - name: Update nightly server config
-        run: echo "0.2.0-SNAPSHOT" | python tools/update-image.py eclipse-pass.nightly.yml pass-core
+        run: python tools/update-image.py eclipse-pass.nightly.yml pass-core ${{ steps.pom_version.outputs.POM_VERSION }}
       - name: Commit change (if any)
         # The 'diff --quiet' ensures that the add/commit is only attempted if there is a change
-        run: diff --quiet || git commit -am 'Update pass-core image'
+        run: diff --quiet || git commit -am 'Update pass-core image to ${{ steps.pom_version.outputs.POM_VERSION }}'
       - name: Push update
         run: git push
